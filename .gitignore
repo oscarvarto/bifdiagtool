@@ -1,0 +1,38 @@
+*.class
+*.jar
+*~
+
+# SBT
+boot/
+lib_managed/
+target/
+.history
+
+# Eclipse
+.cache
+.classpath
+.project
+.scala_dependencies
+.settings
+.target/
+
+# IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# TextMate
+*.tmproj
+
+# Mac
+.DS_Store
+
+#eclipse, ensime
+*.classpath
+*.project
+*.cache
+*.settings
+.ensime
+.ensime_lucene/
