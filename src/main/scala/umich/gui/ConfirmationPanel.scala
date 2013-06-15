@@ -1,13 +1,8 @@
 package umich.gui
 
-import java.awt.{ GridLayout }
+import java.awt.GridLayout
 
-import javax.swing.{
-  Action,
-  JButton,
-  JLabel,
-  JPanel
-}
+import javax.swing.{ Action, JButton, JLabel, JPanel }
 
 class ConfirmationPanel(numComponents: Int, action: Action) extends JPanel {
   setLayout(new GridLayout(1, numComponents))
@@ -21,4 +16,3 @@ class ConfirmationPanel(numComponents: Int, action: Action) extends JPanel {
     this.add(new JLabel())
   }
 }
-

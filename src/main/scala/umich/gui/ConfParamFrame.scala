@@ -10,23 +10,42 @@ import java.awt.event.ActionEvent
 import javax.swing.{
   AbstractAction,
   BoxLayout,
+  ButtonGroup,
   JComboBox,
   JLabel,
   JFrame,
   JPanel,
+  JRadioButton,
   JTextField
 }
 
-import umich.parser.DynSys
+import java.util.{ List ⇒ JList }
 
-class ConfParamFrame(val mainFr: MainFrame, val dynSys: DynSys) extends JFrame {
+import umich.parser._
+import umich.parser.Names._
+import umich.simulation.Project
+import umich.simulation.ParameterConfig
+
+//val force2d: Boolean = false
+class ConfParamFrame(
+  val proj: Project,
+  var cont: Option[(Unit ⇒ Unit)] = None) extends JFrame { fr ⇒
+  val dynSys = proj.dynSys
+  val alreadyChosen = proj.paramConfs.headOption map { _._1 }
   val selectionContainer = new JPanel {
     // Components
     val instructions = new JLabel("Choose one parameter, its range, and a step")
-    import java.util.{ Vector => JVector }
+    import java.util.{ Vector ⇒ JVector }
+
     import collection.JavaConverters._
-    val combo = new JComboBox(
-      new JVector(dynSys.namesParams.toList.map { _.name }.asJava))
+
+    val allNames: List[String] = dynSys.namesParams.toList.map { _.name }
+    import scalaz.std.option._
+    val paramNames: List[String] = fold(alreadyChosen)(
+      some ⇒ allNames.filterNot(some.name contains),
+      allNames)
+    val options = new JVector(paramNames.asJava)
+    val combo = new JComboBox(options)
     combo.setName("ConfParamFr.selectionContainer.combo")
     combo.setEditable(false)
     // Layout
@@ -37,11 +56,11 @@ class ConfParamFrame(val mainFr: MainFrame, val dynSys: DynSys) extends JFrame {
 
   val paramInfo = new JPanel {
     // Components
-    val rangeFrom = new JTextField("", RANGE_FROM_COLUMNS)
+    val rangeFrom = new JTextField("", RangeFromColumns)
     rangeFrom.setName("ConfParamFr.paramInfo.rangeFrom")
-    val rangeTo = new JTextField("", RANGE_TO_COLUMNS)
+    val rangeTo = new JTextField("", RangeToColumns)
     rangeTo.setName("ConfParamFr.paramInfo.rangeTo")
-    val step = new JTextField("", STEP_COLUMNS)
+    val step = new JTextField("", StepColumns)
     step.setName("ConfParamFr.paramInfo.step")
 
     //Layout
@@ -83,51 +102,98 @@ class ConfParamFrame(val mainFr: MainFrame, val dynSys: DynSys) extends JFrame {
     add(step, c)
 
     // Constants
-    val RANGE_FROM_COLUMNS = 10
-    val RANGE_TO_COLUMNS = 10
-    val STEP_COLUMNS = 20
+    val RangeFromColumns = 10
+    val RangeToColumns = 10
+    val StepColumns = 20
   }
 
-  val logPane = LogPane("ConfParamFrame.logArea")
-  val confPanel = new ConfirmationPanel(5, new AbstractAction("Next") {
-    import scalaz.syntax.std.string._
-    import scalaz.syntax.traverse._
-    import scalaz.std.list._
-    import scalaz.{ NonEmptyList, Validation }
+  // val choose2dOr3dPanel = new JPanel {
+  //   // Components
+  //   val buttonGroup = new ButtonGroup()
+  //   val twoDButton = new JRadioButton("2D")
+  //   twoDButton.setName("ConfParamFr.choose2dOr3dPanel.2dRadioButton")
+  //   val threeDButton = new JRadioButton("3D")
+  //   threeDButton.setName("ConfParamFr.choose2dOr3dPanel.3dRadioButton")
+  //   twoDButton.setSelected(true)
+  //   threeDButton.setEnabled(!force2d)
+  //   buttonGroup.add(twoDButton)
+  //   buttonGroup.add(threeDButton)
+  //   setLayout(new BoxLayout(this, BoxLayout.X_AXIS))
+  //   add(twoDButton)
+  //   add(threeDButton)
+  // }
 
+  val logPane = LogPane("ConfParamFr.logArea")
+
+  val skipAction = new AbstractAction("I will vary one parameter only") {
     def actionPerformed(event: ActionEvent) {
-      val name = selectionContainer.combo.getSelectedItem().asInstanceOf[String]
-      val maybeStringNums = List(
-        paramInfo.rangeFrom.getText(),
-        paramInfo.rangeTo.getText(),
-        paramInfo.step.getText())
-
-      type λ[α] = Validation[NonEmptyList[NumberFormatException], α]
-      val errorsOrNums = maybeStringNums.traverse[λ, Double](
-        _.parseDouble.toValidationNel)
-
-      errorsOrNums.fold(errorsNel =>
-        {
-          // Show errors to user
-          val errorMessages = ENTRIES_MUST_BE_NUMBERS :: errorsNel.toList
-          logPane.textArea.setText(errorMessages.mkString("\n"))
-        }, nums =>
-        {
-          // Do something with
-          // nums, validate: from < to, 0 < step <=  (to - from)
-          // name
-        }
-      )
+      import scalaz.std.option._
+      import scalaz.syntax.std.option._
+      cont.cata(
+        c ⇒ c(()), println("This should happen during testing only"))
     }
-  })
+  }
+  val okAction = new AbstractAction("Ok") {
+    def actionPerformed(event: ActionEvent) {
+      getErrorsOrParamConfig().fold(
+        errorsNel ⇒
+          {
+            // Show errors to user
+            val errorMessages: List[String] =
+              EntriesMustBeNumbers :: errorsNel.list
+            logPane.textArea.setText(errorMessages.mkString("\n"))
+          },
+        parConf ⇒
+          {
+            import scalaz.std.option._
+            import scalaz.syntax.std.option._
+            cont.cata(
+              c ⇒ c(()), println("This should happen during testing only"))
+          })
+    }
+  }
+  val confPanel = new ConfirmationOrSkipPanel(3, skipAction, okAction)
+  if (alreadyChosen.isEmpty) confPanel.skipButton.setVisible(false)
 
   val pane = getContentPane()
   pane.setLayout(new BoxLayout(pane, BoxLayout.Y_AXIS))
   pane.add(selectionContainer)
   pane.add(paramInfo)
+  //pane.add(choose2dOr3dPanel)
   pane.add(logPane)
   pane.add(confPanel)
 
+  def name(): String = selectionContainer.combo.getSelectedItem().
+    asInstanceOf[String]
+  def from(): String = paramInfo.rangeFrom.getText()
+  def to(): String = paramInfo.rangeTo.getText()
+  def step(): String = paramInfo.step.getText()
+
+  import scalaz.ValidationNel
+  def getErrorsOrParamConfig(): ValidationNel[String, ParameterConfig] = {
+    import scalaz.syntax.std.string._
+    import scalaz.syntax.traverse._
+    import scalaz.std.list._
+    import scalaz.{ NonEmptyList, Validation }
+
+    val maybeStringNums = List(from(), to(), step())
+    type λ[α] = Validation[NonEmptyList[NumberFormatException], α]
+    val nfeNelOrNums: λ[List[Double]] = maybeStringNums.traverse[λ, Double](
+      _.parseDouble.toValidationNel)
+    val errorMsgsOrNums: ValidationNel[String, List[Double]] = nfeNelOrNums.
+      leftMap { _.map(_.getMessage) }
+    errorMsgsOrNums flatMap { ns ⇒
+      val nums = ns.toArray
+      ParameterConfig(nums(0), nums(1), nums(2))
+    }
+  }
+
+  def getParamConfig(): Option[(ParamName, ParameterConfig)] = {
+    import scalaz.syntax.std.option._
+    val paramConf = getErrorsOrParamConfig().toOption
+    paramConf.flatMap { conf ⇒ Some(ParamName(name()) → conf) }
+  }
+
   // Constants
-  val ENTRIES_MUST_BE_NUMBERS = "From, To and Step entries must be numbers"
+  val EntriesMustBeNumbers = "From, To and Step entries must be numbers"
 }

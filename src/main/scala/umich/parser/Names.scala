@@ -3,9 +3,12 @@ package umich.parser
 import scala.collection.immutable.TreeSet
 
 object Names {
-  case class VarName(name: String) extends AnyVal
-  case class ConstName(name: String) extends AnyVal
-  case class ParamName(name: String) extends AnyVal
+  trait Name extends Any {
+    def name: String
+  }
+  case class VarName(name: String) extends AnyVal with Name
+  case class ConstName(name: String) extends AnyVal with Name
+  case class ParamName(name: String) extends AnyVal with Name
 
   implicit object VarNameOrdering extends Ordering[VarName] {
     def compare(a: VarName, b: VarName) = a.name compare b.name
@@ -20,15 +23,15 @@ object Names {
   }
 
   class NameMap[K, V]
-  implicit val varToNum = new NameMap[VarName, Num]
-  implicit val constToNum = new NameMap[ConstName, Num]
-  implicit val paramToNum = new NameMap[ParamName, Num]
+  implicit val varToNum = new NameMap[VarName, Double]
+  implicit val constToNum = new NameMap[ConstName, Double]
+  implicit val paramToNum = new NameMap[ParamName, Double]
 
   import shapeless.HMap
 
   type TableVals = HMap[NameMap]
 
-  def mapAdd(m: Map[ConstName, Num], hmap: TableVals): TableVals = {
+  def mapAdd(m: Map[ConstName, Double], hmap: TableVals): TableVals = {
     val maybePair = m.headOption
     if (maybePair == None) hmap else mapAdd(m.drop(1), hmap + maybePair.get)
   }

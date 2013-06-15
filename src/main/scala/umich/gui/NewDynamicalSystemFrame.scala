@@ -1,6 +1,7 @@
 package umich.gui
 
 import java.awt.{
+  BorderLayout,
   Dimension,
   GraphicsEnvironment
 }
@@ -9,7 +10,6 @@ import java.awt.event.ActionEvent
 
 import javax.swing.{
   AbstractAction,
-  BoxLayout,
   JEditorPane,
   JFrame,
   JScrollPane,
@@ -25,9 +25,9 @@ import scalaz.syntax.validation._
 import umich.parser.DynSys
 
 class NewDynamicalSystemFrame(
-  val mfr: MainFrame,
-  var parsingFunc: String => ValidationNel[String, DynSys])
-    extends JFrame {
+  var cont: Option[(Unit ⇒ Unit)] = None,
+  val parsingFunc: String ⇒ ValidationNel[String, DynSys])
+  extends JFrame {
 
   setName("NewDynamicalSystemFrame")
 
@@ -39,40 +39,40 @@ class NewDynamicalSystemFrame(
 
   val logPane = LogPane("NewDynamicalSystemFrame.logArea")
 
-  val splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT)
-  splitPane.setTopComponent(ed)
-  splitPane.setBottomComponent(logPane)
+  val splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, ed, logPane)
   // Confirmation Panel
   import scalaz.std.string._
   import scalaz.syntax.std.string._
-  val logAction = new AbstractAction() {
+  val confPanel = new ConfirmationPanel(5, new AbstractAction("Ok") {
     def actionPerformed(event: ActionEvent) {
       val mCode: Option[String] = ed.getText().charsNel map { _.list.mkString }
       import NewDynamicalSystemFrame._
-      val errorsOrDynSys: ValidationNel[String, DynSys] = mCode.fold {
-        NonEmptyList(EMPTY_CODE).failure[DynSys]
-      } { parsingFunc }
-      // TODO: SUCCESS CASE SHOULD BE TREATED DIFFERENTLY!!
-      // DynSys should be passed to next window: ConfigureSimulationFrame
-      errorsOrDynSys.fold(loe => logPane.textArea.setText(
-        loe.list.mkString("\n")), sys => logPane.textArea.setText("Cool"))
+      import scalaz.std.option._
+      import scalaz.syntax.std.option._
+      val errorsOrDynSys: ValidationNel[String, DynSys] = mCode.cata(
+        parsingFunc(_), NonEmptyList(EmptyCode).failure[DynSys])
+
+      errorsOrDynSys.fold(
+        loe ⇒ logPane.textArea.setText(loe.list.mkString("\n")),
+        dynSys ⇒ cont.cata(
+          c ⇒ c(()), println("This happens only during testing")))
     }
-  }
-  val confPanel = new ConfirmationPanel(5, logAction)
+  })
 
   val pane = getContentPane()
-  pane.setLayout(new BoxLayout(pane, BoxLayout.Y_AXIS))
-  pane.add(splitPane)
-  pane.add(confPanel)
+  pane.setLayout(new BorderLayout())
+  pane.add(splitPane, BorderLayout.CENTER)
+  pane.add(confPanel, BorderLayout.SOUTH)
 
   val b = GraphicsEnvironment.getLocalGraphicsEnvironment.getMaximumWindowBounds
   setPreferredSize(new Dimension(b.width / 2, b.height * 5 / 6))
   splitPane.setDividerLocation(b.height * 2 / 3)
   setLocationRelativeTo(null)
   setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE)
+  def getDynSys(): Option[DynSys] = parsingFunc(ed.getText()).toOption
 }
 
 object NewDynamicalSystemFrame {
-  val EMPTY_CODE = "You should write a Dynamical System\n"
-  val SYNTAX_ERRORS = "Please check your entry for syntax errors\n"
+  val EmptyCode = "You should write a Dynamical System"
+  val SyntaxErrors = "Please check your entry for syntax errors"
 }

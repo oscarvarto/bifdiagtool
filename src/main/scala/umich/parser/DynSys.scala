@@ -7,9 +7,11 @@ trait DynSys {
   def eval(input: TableVals): Array[Double]
   def evalNorms(input: TableVals): Array[Double]
   def namesVariables: TreeSet[VarName]
+  def namesVariablesInNorms: TreeSet[VarName]
   def namesParams: TreeSet[ParamName]
   def constants: Map[ConstName, Double]
   def numberVariables: Int
   def numberParams: Int
   def numberNorms: Int
+  def maybeTwoParameterSimulation: Boolean
 }

@@ -1,12 +1,12 @@
 package umich.gui
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import tagobjects.GUITest
 
 import org.fest.swing.fixture.FrameFixture
 import org.fest.swing.edt.{ GuiActionRunner, GuiQuery }
 
-class NewDynamicalSystemFrameTest extends FestiveFunSuite with ShouldMatchers {
+class NewDynamicalSystemFrameTest extends FestiveFunSuite with Matchers {
   import umich.parser.{ DynSys, DynSys1 }
   import NewDynamicalSystemFrame._
 
@@ -17,7 +17,7 @@ class NewDynamicalSystemFrameTest extends FestiveFunSuite with ShouldMatchers {
     val frame = GuiActionRunner.execute(
       new GuiQuery[NewDynamicalSystemFrame]() {
         protected def executeInEDT() = new NewDynamicalSystemFrame(
-          new MainFrame(), s => NonEmptyList("This is a dummy parser function").failure[DynSys])
+          None, s ⇒ NonEmptyList("This is a dummy parser function").failure[DynSys])
       })
     window = new FrameFixture(frame)
     window.show()
@@ -28,7 +28,7 @@ class NewDynamicalSystemFrameTest extends FestiveFunSuite with ShouldMatchers {
     "the user should see simple error messages at the Log Area", GUITest) {
     window.textBox("NewDynamicalSystemFrame.ed").setText("")
     window.button("ConfirmationPanel.okButton").click()
-    window.textBox("NewDynamicalSystemFrame.logArea").requireText(EMPTY_CODE)
+    window.textBox("NewDynamicalSystemFrame.logArea").requireText(EmptyCode)
   }
 
   test("If parsing of a Dynamical System fails " +
@@ -41,8 +41,8 @@ class NewDynamicalSystemFrameTest extends FestiveFunSuite with ShouldMatchers {
     // TODO: better error logging for parsing errors or Dynamical Systems
   }
 
-  test("If parsing of a Dynamical System succeeds " +
-    "the user should see a ConfigureSimulationFrame window", GUITest) {
-
-  }
+  // test("If parsing of a Dynamical System succeeds " +
+  //   "the user should see a ConfigureSimulationFrame window", GUITest) {
+  //   pending
+  // }
 }

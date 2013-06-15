@@ -21,19 +21,17 @@ import javax.swing.{
 import scalaz.std.string._
 import scalaz.syntax.std.string._
 
-class NewProjectFrame(mainFr: MainFrame) extends JFrame { npf =>
-  var mName: Option[String] = None
-
+class NewProjectFrame(var cont: Option[(Unit ⇒ Unit)] = None) extends JFrame {
   val infoPanel = new JPanel {
-    val NAME_ERROR = "Name should not be empty"
-    val MAX_NAME_LENGTH = 15
-    val DEFAULT_WIDTH = 50
-    val DEFAULT_HEIGHT = 70
+    val NameError = "Name should not be empty"
+    val MaxNameLenght = 15
+    val DefaultWidth = 50
+    val DefaultHeight = 70
 
     // InformationPanel components
     val nameLabel: JLabel = new JLabel("Project's name")
-    val nameTextField: JTextField = new JTextField("", MAX_NAME_LENGTH)
-    val nameShouldNotBeEmpty = new JLabel(NAME_ERROR)
+    val nameTextField: JTextField = new JTextField("", MaxNameLenght)
+    val nameShouldNotBeEmpty = new JLabel(NameError)
     // Adding components
     setLayout(new GridBagLayout())
     val c = new GridBagConstraints()
@@ -57,14 +55,22 @@ class NewProjectFrame(mainFr: MainFrame) extends JFrame { npf =>
     nameShouldNotBeEmpty.setForeground(Color.RED)
     nameShouldNotBeEmpty.setVisible(false)
     add(nameShouldNotBeEmpty, c)
-    setPreferredSize(new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT))
+    setPreferredSize(new Dimension(DefaultWidth, DefaultHeight))
   }
+
+  def getProjectName(): Option[String] =
+    infoPanel.nameTextField.getText().charsNel map { _.list.mkString }
+
   val okAction = new AbstractAction("Ok") {
     def actionPerformed(event: ActionEvent) {
-      mName = infoPanel.nameTextField.getText().charsNel map { _.list.mkString }
-      if (mName.isDefined) {
-        mainFr.newProj(mName.get)
-      }
+      showNameShouldNotBeEmpty(false)
+      val mProjName = getProjectName()
+      import scalaz.std.option._
+      import scalaz.syntax.std.option._
+      mProjName.cata(
+        name ⇒ cont.cata(
+          some ⇒ some(()), println("This only happens during testing")),
+        showNameShouldNotBeEmpty(true))
     }
   }
 
@@ -76,6 +82,6 @@ class NewProjectFrame(mainFr: MainFrame) extends JFrame { npf =>
   pane.add(infoPanel)
   pane.add(confPanel)
 
-  def showNameShouldNotBeEmpty(aFlag: Boolean): Unit = infoPanel.nameShouldNotBeEmpty.setVisible(aFlag)
+  def showNameShouldNotBeEmpty(aFlag: Boolean): Unit =
+    infoPanel.nameShouldNotBeEmpty.setVisible(aFlag)
 }
-

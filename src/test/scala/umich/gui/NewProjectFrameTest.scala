@@ -1,16 +1,16 @@
 package umich.gui
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import tagobjects.GUITest
 
 import org.fest.swing.fixture.FrameFixture
 import org.fest.swing.edt.{ GuiActionRunner, GuiQuery }
 
-class NewProjectFrameTest extends FestiveFunSuite with ShouldMatchers {
+class NewProjectFrameTest extends FestiveFunSuite with Matchers {
   override def beforeEach() {
     val frame = GuiActionRunner.execute(
       new GuiQuery[NewProjectFrame]() {
-        protected def executeInEDT() = new NewProjectFrame(new MainFrame())
+        protected def executeInEDT() = new NewProjectFrame()
       })
     window = new FrameFixture(frame)
     window.show()
@@ -21,13 +21,13 @@ class NewProjectFrameTest extends FestiveFunSuite with ShouldMatchers {
     window.textBox("InformationPanel.nameTextField").enterText("Bif1")
     window.button("ConfirmationPanel.okButton").click()
     val fr = window.target.asInstanceOf[NewProjectFrame]
-    fr.mName should be(Some("Bif1"))
+    fr.getProjectName should be(Some("Bif1"))
   }
 
   test("Should get None for an empty name", GUITest) {
     window.textBox("InformationPanel.nameTextField").enterText("")
     window.button("ConfirmationPanel.okButton").click()
     val fr = window.target.asInstanceOf[NewProjectFrame]
-    fr.mName should be(None)
+    fr.getProjectName should be(None)
   }
 }

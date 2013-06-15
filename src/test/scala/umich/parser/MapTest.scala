@@ -1,9 +1,9 @@
 package umich.parser
 
 import org.scalatest.FunSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 
-class MapTest extends FunSpec with ShouldMatchers {
+class MapTest extends FunSpec with Matchers {
   describe("A NameMap") {
     import Names._
     import shapeless._

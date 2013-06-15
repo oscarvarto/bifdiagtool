@@ -8,7 +8,7 @@ import scala.collection.immutable.TreeSet
 sealed abstract class Expr
 
 sealed trait CanEvaluate {
-  def eval: Reader[TableVals, Num]
+  def eval: Reader[TableVals, Double]
 }
 
 trait CanSearchVarsInNorm {
@@ -44,7 +44,7 @@ case class DynamicalSystem(exprs: List[Expr]) extends Expr with DynSys {
     }
   }
 
-  def eval(input: TableVals): Array[Num] = {
+  def eval(input: TableVals): Array[Double] = {
     //require(input.underlying.keySet == ast.namesVariables ++ ast.namesParams, "eval didn't receive enough data")
     val completeInput = mapAdd(constants, input)
     val evaluation = for {
@@ -54,7 +54,7 @@ case class DynamicalSystem(exprs: List[Expr]) extends Expr with DynSys {
     evaluation
   }
 
-  def evalNorms(input: TableVals): Array[Num] = {
+  def evalNorms(input: TableVals): Array[Double] = {
     val completeInput = mapAdd(constants, input)
     val evaluation = for {
       norm ← ast.norms.toArray
@@ -63,18 +63,25 @@ case class DynamicalSystem(exprs: List[Expr]) extends Expr with DynSys {
   }
 
   val namesVariables: TreeSet[VarName] = ast.namesVariables
+  val namesVariablesInNorms: TreeSet[VarName] = ast.namesVariablesInNorm
   val numberVariables = namesVariables.size
 
-  val constants: Map[ConstName, Num] = ast.constants
+  val constants: Map[ConstName, Double] = ast.constants
 
   val namesParams: TreeSet[ParamName] = ast.namesParams
   val numberParams = namesParams.size
 
   val numberNorms = ast.norms.size
+
+  val maybeTwoParameterSimulation: Boolean = {
+    import scalaz.std.boolean._
+    import scalaz.syntax.std.boolean._
+    (numberParams > 1) ∧ (numberNorms == 1)
+  }
 }
 
 private[parser] case class Equation(dotStVar: DotStateVar, expr: Expr)
-    extends Expr with CanEvaluate {
+  extends Expr with CanEvaluate {
   def eval = for {
     num ← expr.eval
   } yield num
@@ -86,14 +93,14 @@ private[parser] case class ConstantDefinition(c: Constant, v: Number) extends Ex
 //private[parser] case class ParamDeclaration(param: Parameter) extends Expr
 
 private[parser] case class NormDefinition(norm: String, expr: Expr)
-    extends Expr with CanEvaluate {
+  extends Expr with CanEvaluate {
   def eval = for {
     num ← expr.eval
   } yield num
 }
 
-private[parser] sealed abstract class BinaryOp(lhs: Expr, rhs: Expr)(f: (Num, Num) ⇒ Num)
-    extends Expr with CanEvaluate with CanSearchParams with CanSearchVarsInNorm {
+private[parser] sealed abstract class BinaryOp(lhs: Expr, rhs: Expr)(f: (Double, Double) ⇒ Double)
+  extends Expr with CanEvaluate with CanSearchParams with CanSearchVarsInNorm {
   def eval = for {
     numlhs ← lhs.eval
     numrhs ← rhs.eval
@@ -103,11 +110,11 @@ private[parser] sealed abstract class BinaryOp(lhs: Expr, rhs: Expr)(f: (Num, Nu
   def searchVars() = lhs.searchVars() ++ rhs.searchVars()
 }
 
-private[parser] case class Add(lhs: Expr, rhs: Expr) extends BinaryOp(lhs, rhs)(Num.addition)
-private[parser] case class Sub(lhs: Expr, rhs: Expr) extends BinaryOp(lhs, rhs)(Num.subtraction)
-private[parser] case class Mul(lhs: Expr, rhs: Expr) extends BinaryOp(lhs, rhs)(Num.product)
-private[parser] case class Div(lhs: Expr, rhs: Expr) extends BinaryOp(lhs, rhs)(Num.division)
-private[parser] case class Pow(lhs: Expr, rhs: Expr) extends BinaryOp(lhs, rhs)(Num.pow)
+private[parser] case class Add(lhs: Expr, rhs: Expr) extends BinaryOp(lhs, rhs)(_ + _)
+private[parser] case class Sub(lhs: Expr, rhs: Expr) extends BinaryOp(lhs, rhs)(_ - _)
+private[parser] case class Mul(lhs: Expr, rhs: Expr) extends BinaryOp(lhs, rhs)(_ * _)
+private[parser] case class Div(lhs: Expr, rhs: Expr) extends BinaryOp(lhs, rhs)(_ / _)
+private[parser] case class Pow(lhs: Expr, rhs: Expr) extends BinaryOp(lhs, rhs)(math.pow(_, _))
 
 private[parser] case class Neg(expr: Expr) extends Expr with CanEvaluate with CanSearchParams with CanSearchVarsInNorm {
   def eval = for {
@@ -129,7 +136,7 @@ private[parser] case class App(f: String, arg: Expr) extends Expr with CanEvalua
       case ("Sin", _) ⇒ Reader { (fReader >=> Reader { math.sin _ }) apply (_: TableVals) }
       case ("Cos", _) ⇒ Reader { (fReader >=> Reader { math.cos _ }) apply (_: TableVals) }
       // ...
-      case (f, x) ⇒ error(f + " cannot be applied as a function to the argument " + x)
+      case (f, x)     ⇒ error(f + " cannot be applied as a function to the argument " + x)
     }
   }
 
@@ -170,4 +177,3 @@ private[parser] case class Parameter(name: String) extends Expr with CanEvaluate
   def searchParams() = TreeSet(ParamName(name))
   def searchVars() = TreeSet.empty
 }
-

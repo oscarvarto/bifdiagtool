@@ -1,12 +1,12 @@
 package umich.gui
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import tagobjects.GUITest
 
 import org.fest.swing.fixture.FrameFixture
 import org.fest.swing.edt.{ GuiActionRunner, GuiQuery }
 
-class MainFrameTest extends FestiveFunSuite with ShouldMatchers {
+class MainFrameTest extends FestiveFunSuite with Matchers {
   override def beforeEach() {
     val frame = GuiActionRunner.execute(
       new GuiQuery[MainFrame]() {
@@ -14,12 +14,5 @@ class MainFrameTest extends FestiveFunSuite with ShouldMatchers {
       })
     window = new FrameFixture(frame)
     window.show()
-  }
-
-  test("Should open the New Project Dialog Window when selecting this option " +
-    "from the New Project Menu", GUITest) {
-    window.menuItem("ProjectMenu.newProjectItem").click()
-    val npf = window.target.asInstanceOf[MainFrame].newProjFr
-    npf.isVisible should be(true)
   }
 }

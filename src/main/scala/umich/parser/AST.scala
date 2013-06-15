@@ -18,12 +18,12 @@ private[parser] object auxOrdering {
 import auxOrdering._
 
 private[parser] case class AST(
-    equations: TreeSet[Equation] = TreeSet.empty,
-    namesVariables: TreeSet[VarName] = TreeSet.empty,
-    constants: Map[ConstName, Num] = Map.empty,
-    namesParams: TreeSet[ParamName] = TreeSet.empty,
-    norms: TreeSet[NormDefinition] = TreeSet.empty,
-    namesVariablesInNorm: TreeSet[VarName] = TreeSet.empty) {
+  equations: TreeSet[Equation] = TreeSet.empty,
+  namesVariables: TreeSet[VarName] = TreeSet.empty,
+  constants: Map[ConstName, Double] = Map.empty,
+  namesParams: TreeSet[ParamName] = TreeSet.empty,
+  norms: TreeSet[NormDefinition] = TreeSet.empty,
+  namesVariablesInNorm: TreeSet[VarName] = TreeSet.empty) {
 
   import AST._
 
@@ -37,7 +37,7 @@ private[parser] case class AST(
     namesVarLens.set(this)(names)
   }
 
-  def addConst(kv: (ConstName, Num)) = {
+  def addConst(kv: (ConstName, Double)) = {
     val constants = constLens.get(this) + kv
     constLens.set(this)(constants)
   }
