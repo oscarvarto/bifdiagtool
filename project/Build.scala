@@ -18,11 +18,9 @@ object Build extends Build {
     testOptions in GUITests := Seq(
       Tests.Argument("-n", "umich.gui.tags.GUITest")
     ),
-    //definedTests in GUITests <<= definedTests in Test,
     testOptions in PlotTests := Seq(
       Tests.Argument("-n", "umich.plot.tags.PlotTest")
     )
-    //definedTests in PlotTests <<= definedTests in Test
   )
 
   lazy val GUITests = config("gui") extend(Test)
@@ -47,7 +45,6 @@ object Build extends Build {
     Defaults.defaultSettings ++
     Seq(
       organization := "umich",
-      // version is defined in version.sbt to support sbt-release
       scalaVersion := Version.scala,
       scalacOptions ++= Seq(
         "-unchecked",
@@ -59,7 +56,12 @@ object Build extends Build {
         "-P:continuations:enable"
       ),
       libraryDependencies ++= Seq(
-        Dependency.Compile.cilibLibrary,
+        //Dependency.Compile.cilibLibrary,
+        Dependency.Compile.guava, // cilib-library dependency
+        Dependency.Compile.functionalJava, // cilib-library dependency
+        Dependency.Compile.parboiledCore, // cilib-library dependency
+        Dependency.Compile.parboiledJava, // cilib-library dependency
+
         Dependency.Compile.scalazCore,
         Dependency.Compile.shapeless,
         Dependency.Compile.spireMath,
@@ -75,7 +77,6 @@ object Build extends Build {
       resolvers ++= Seq(
         sonatypeRepo("snapshots"),
         sonatypeRepo("releases")
-        //Resolver.file("/Users/oscarvarto/.ivy2/local")
       ),
       parallelExecution in Test := false
     )
@@ -87,7 +88,11 @@ object Build extends Build {
   object Dependency {
 
     object Compile {
-      val cilibLibrary = "net.cilib" % "cilib-library" % "0.8-SNAPSHOT"
+      //val cilibLibrary = "net.cilib" % "cilib-library" % "0.8-SNAPSHOT"
+      val guava = "com.google.guava" % "guava" % "13.0.1"
+      val functionalJava = "org.functionaljava" % "functionaljava" % "3.1"
+      val parboiledCore = "org.parboiled" % "parboiled-core" % "1.1.4"
+      val parboiledJava = "org.parboiled" % "parboiled-java" % "1.1.4"
       val scalazCore = "org.scalaz" % "scalaz-core_2.10" % "7.0.2"
       val shapeless = "com.chuusai" % "shapeless_2.10" % "1.2.4"
       val spireMath = "org.spire-math" % "spire_2.10" % "0.5.0"
