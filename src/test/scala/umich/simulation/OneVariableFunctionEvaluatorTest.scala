@@ -33,7 +33,7 @@ class OneVariableFunctionEvaluatorTest extends FunSuite
     g(0.0) should be(0.0)
     And("It is possible to evaluate it's derivative calling ridders")
     val dg = rid(step)(g(_))
-    // dg(0.0) == 0, then (r, x) = (0.0, 0.0) we cannot say anything about
+    // dg(0.0) = 0, then (r, x) = (0.0, 0.0) we cannot say anything about
     // the stability of this fixed point
     // However a graphical analysis of the bifurcation diagram
     // shows it is a Saddle Node.
@@ -63,7 +63,7 @@ class OneVariableFunctionEvaluatorTest extends FunSuite
     g(0.0) should be(0.0)
     And("It is possible to evaluate it's derivative calling ridders")
     val dg = rid(step)(g(_))
-    // dg(0.0) == 0, then (r, x) = (0.0, 0.0) we cannot say anything about
+    // dg(0.0) = 0, then (r, x) = (0.0, 0.0) we cannot say anything about
     // the stability of this fixed point.
     // However a graphical analysis of the bifurcation diagram
     // shows it is a Transcritical Bifurcation Node.
@@ -95,10 +95,23 @@ class OneVariableFunctionEvaluatorTest extends FunSuite
     g(0.0) should be(0.0)
     And("It is possible to evaluate it's derivative calling ridders")
     val dg = rid(step)(g(_))
-    // dg(0.0) == 0, then (r, x) = (0.0, 0.0) we cannot say anything about
+    // dg(0.0) = 0, then (r, x) = (0.0, 0.0) we cannot say anything about
     // the stability of this fixed point.
     // However a graphical analysis of the bifurcation diagram
     // shows it is a Subcritical Pitchfork Bifurcation.
     dg(0.0) should be(0.0 +- 1e-5)
+  }
+
+  test("x' = _r*x*(1 - x/_k) - x^2/(1 + x^2)") {
+    Given("The OneVariableFunctionEvaluator for the insectOutbreakProject")
+    val fEv = OneVariableFunctionEvaluator(insectOutbreakProject)
+    When("(r, k) =  we get one function")
+    val (r, k) = (0.35, 20.0)
+    val f = fEv.f(Map(ParamName("_r") → r, ParamName("_k") → k))
+    Then("It is possible to evaluate the function")
+    f(16.5623699612230) should be(0.0 +- 1e-6)
+    And("It is possible to evaluate it's derivative calling ridders")
+    val df = rid(0.1)(f(_))
+    df(16.5623699612230) should be(-0.230119969216587 +- 1e-6)
   }
 }

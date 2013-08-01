@@ -32,7 +32,6 @@ object Person {
 
     val vnelName = Name(name).toValidationNel[String, Name]
     val vnelAge = Age(age).toValidationNel[String, Age]
-
     (vnelName |@| vnelAge) { (n, a) ⇒ Person(n, a) }
   }
 }

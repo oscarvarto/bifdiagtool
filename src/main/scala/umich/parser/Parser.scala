@@ -18,6 +18,7 @@ object Parser extends JavaTokenParsers with ImplicitConversions {
   def stateVar = """[a-z]\w*""".r <~ not("'") ^^ StateVar
   def constant = """[A-Z][A-Z0-9_]*""".r <~ not("'") ^^ Constant
   def parameter = """_\w+""".r <~ not("'") ^^ Parameter
+
   def expr: Parser[Expr] = chainl1(prod, "+" ^^^ Add | "-" ^^^ Sub)
   def prod = chainl1(signExp, "*" ^^^ Mul | "/" ^^^ Div)
   def signExp = opt("-") ~ power ^^ { case Some(_) ~ e ⇒ Neg(e); case _ ~ e ⇒ e }

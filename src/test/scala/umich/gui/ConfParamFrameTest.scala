@@ -37,8 +37,7 @@ class ConfParamFrameTest1 extends FestiveFunSuite with Matchers {
       be(Array("_w"))
   }
 
-  test("From, To and Step entries must be numbers. " +
-    "If From entry is not a number, then the user should be told", GUITest) {
+  test("From, To and Step entries must be numbers.", GUITest) {
     window.button("ConfirmationOrSkipPanel.okButton").click()
     window.textBox("ConfParamFr.logArea").text() should be(
       """|From, To and Step entries must be numbers

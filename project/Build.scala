@@ -1,45 +1,50 @@
 import sbt._
 import sbt.Keys._
-import com.typesafe.sbt.SbtScalariform._
 import Resolver.sonatypeRepo
 
 object Build extends Build {
 
-  lazy val guitesting = Project(
+  lazy val bidiatool = Project(
     "bidiatool",
     file("."),
     settings = commonSettings ++ Seq(
       libraryDependencies ++= Seq(
       )
     )
-  ).configs( nonGUITests )
-  .settings( inConfig(nonGUITests)(Defaults.testSettings): _* )
+  ).configs( GUITests, PlotTests )
+  .settings( inConfig(GUITests)(Defaults.testTasks): _*)
+  .settings( inConfig(PlotTests)(Defaults.testTasks): _*)
   .settings(
-    testOptions in nonGUITests := Seq(
-      Tests.Argument("-l", "umich.guitesting.tags.GUITest")
+    testOptions in GUITests := Seq(
+      Tests.Argument("-n", "umich.gui.tags.GUITest")
+    ),
+    //definedTests in GUITests <<= definedTests in Test,
+    testOptions in PlotTests := Seq(
+      Tests.Argument("-n", "umich.plot.tags.PlotTest")
     )
+    //definedTests in PlotTests <<= definedTests in Test
   )
 
-  lazy val nonGUITests = config("nongui") extend(Test)
+  lazy val GUITests = config("gui") extend(Test)
+  lazy val PlotTests = config("plot") extend(Test)
 
-  lazy val formatSettings = scalariformSettings ++ Seq(
-    ScalariformKeys.preferences in Compile := formattingPreferences,
-    ScalariformKeys.preferences in Test    := formattingPreferences
-  )
+  //lazy val formatSettings = scalariformSettings ++ Seq(
+    //ScalariformKeys.preferences in Compile := formattingPreferences,
+    //ScalariformKeys.preferences in Test    := formattingPreferences
+  //)
 
-  def formattingPreferences = {
-    import scalariform.formatter.preferences._
-    FormattingPreferences()
-      .setPreference(RewriteArrowSymbols, true)
-      .setPreference(AlignParameters, true)
-      .setPreference(AlignSingleLineCaseStatements, true)
-      .setPreference(PlaceScaladocAsterisksBeneathSecondAsterisk, true)
-      .setPreference(CompactControlReadability, false)
-  }
+  //def formattingPreferences = {
+    //import scalariform.formatter.preferences._
+    //FormattingPreferences()
+      //.setPreference(RewriteArrowSymbols, true)
+      //.setPreference(AlignParameters, true)
+      //.setPreference(AlignSingleLineCaseStatements, true)
+      //.setPreference(PlaceScaladocAsterisksBeneathSecondAsterisk, true)
+      //.setPreference(CompactControlReadability, false)
+  //}
 
   def commonSettings =
     Defaults.defaultSettings ++
-    formatSettings ++
     Seq(
       organization := "umich",
       // version is defined in version.sbt to support sbt-release
@@ -54,11 +59,15 @@ object Build extends Build {
         "-P:continuations:enable"
       ),
       libraryDependencies ++= Seq(
+        Dependency.Compile.cilibLibrary,
         Dependency.Compile.scalazCore,
         Dependency.Compile.shapeless,
         Dependency.Compile.spireMath,
         Dependency.Compile.ejml,
+        Dependency.Compile.commonsMath,
         Dependency.Compile.scalachart,
+        Dependency.Compile.joglMain,
+        Dependency.Compile.gluegenRt,
         Dependency.Test.scalatest,
         Dependency.Test.festSwing,
         compilerPlugin("org.scala-lang.plugins" % "continuations" % Version.scala)
@@ -66,9 +75,9 @@ object Build extends Build {
       resolvers ++= Seq(
         sonatypeRepo("snapshots"),
         sonatypeRepo("releases")
+        //Resolver.file("/Users/oscarvarto/.ivy2/local")
       ),
-      parallelExecution in Test := false,
-      fork in run := true
+      parallelExecution in Test := false
     )
 
   object Version {
@@ -78,15 +87,19 @@ object Build extends Build {
   object Dependency {
 
     object Compile {
-      val scalazCore = "org.scalaz" % "scalaz-core_2.10" % "7.0.0"
+      val cilibLibrary = "net.cilib" % "cilib-library" % "0.8-SNAPSHOT"
+      val scalazCore = "org.scalaz" % "scalaz-core_2.10" % "7.0.2"
       val shapeless = "com.chuusai" % "shapeless_2.10" % "1.2.4"
-      val spireMath = "org.spire-math" % "spire_2.10" % "0.4.0"
+      val spireMath = "org.spire-math" % "spire_2.10" % "0.5.0"
       val ejml = "com.googlecode.efficient-java-matrix-library" % "ejml" % "0.22"
+      val commonsMath = "org.apache.commons" % "commons-math3" % "3.2"
       val scalachart = "com.github.wookietreiber" % "scala-chart_2.10" % "0.2.2"
+      val joglMain = "org.jogamp.jogl" % "jogl-all-main" % "2.0-rc11"
+      val gluegenRt = "org.jogamp.gluegen" % "gluegen-rt-main" % "2.0-rc11"
   }
 
     object Test {
-      val scalatest = "org.scalatest" % "scalatest_2.10" % "2.0.M6-SNAP21"
+      val scalatest = "org.scalatest" % "scalatest_2.10" % "2.0.M6-SNAP28" % "test"
       val festSwing = "org.easytesting" % "fest-swing" % "1.2.1" % "test"
     }
   }

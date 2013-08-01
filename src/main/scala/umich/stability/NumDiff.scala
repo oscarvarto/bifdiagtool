@@ -71,7 +71,7 @@ object NumDiff {
     val sqrtη = Fractional[A].sqrt(η)
     val n = xc.size
     val Jac = Array.fill(n, n)(Fractional[A].zero)
-    import spire.syntax._
+    import spire.syntax.cfor._
     cfor(0)(_ < n, _ + 1) { j ⇒
       val maxj = Fractional[A].max(
         Fractional[A].abs(xc(j)),

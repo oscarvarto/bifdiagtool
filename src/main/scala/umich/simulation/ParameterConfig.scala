@@ -30,7 +30,7 @@ object ParameterConfig {
   }
 
   val cond1Msg = "From must be less or equal than To"
-  val cond2Msg = "Step must be less than given range"
+  val cond2Msg = "Step must be less or equal than given range"
 }
 
 class Range private (val from: Double, val to: Double)

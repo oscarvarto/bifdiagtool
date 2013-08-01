@@ -16,16 +16,13 @@ class NewProjectAction() extends AbstractAction("New Project") {
   var cont: (Unit ⇒ Unit) = null
   import util.continuations._
 
-  def actionPerformed(event: ActionEvent) {
-    reset {
-      val projName = getProjectName()
-      val dynSys = getDynamicalSystem()
-      val proj1 = addParamConfig(Project(projName, dynSys))
-      val proj2 = if (dynSys.maybeTwoParameterSimulation) {
-        addParamConfig(proj1)
-      } else proj1
-      processProject(proj2)
-    }
+  def actionPerformed(event: ActionEvent) = reset {
+    val projName = getProjectName()
+    val dynSys = getDynamicalSystem()
+    val proj1 = addParamConfig(Project(projName, dynSys))
+    val proj2 = if (dynSys.maybeTwoParameterSimulation)
+                addParamConfig(proj1) else proj1
+    processProject(proj2)
   }
 
   import scalaz.syntax.std.option._
